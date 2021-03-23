@@ -1,0 +1,37 @@
+﻿body {
+    font-family: Verdana,Arial,sans-serif;
+    font-size: 1.1em;
+}
+
+#form, #form ul{
+    list-style: none;
+}
+
+.emphasized{
+    color: #964e00;
+    font-weight: bolder;
+}
+
+#guitar{
+    font-family: monospace;
+    white-space: pre;
+}
+
+.inline{
+    display: inline;
+}
+
+#key-button{
+    width: 50px;
+}
+#mode-button{
+    width: 150px;
+}
+#sign-button{
+    width: 150px;
+}
+#scale{
+    display: inline;
+    font-size: 1.3em;
+    padding-left: 1em;
+}
