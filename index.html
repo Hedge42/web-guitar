@@ -53,14 +53,7 @@
 
         </li>
 
-        <!-- SIGN -->
-        <li>
-            <label for="sign">Sign</label>
-            <select name="sign" id="sign">
-                <option value="sharps">Sharps</option>
-                <option value="flats">Flats</option>
-            </select>
-        </li>
+       
 
         <!-- TUNING -->
         <li>
@@ -82,24 +75,56 @@
         </li>
 
         <!-- INTERVALS -->
-        <li>
+        <!--<li>-->
             <!--<label for="intervals">Intervals</label>-->
-            <fieldset id="intervals">
+            <!--<fieldset id="intervals">
                 <legend>Intervals</legend>
                 <label for="cb1">1</label>
-                <input type="checkbox" id="cb1" onchange="update()" checked />
+                <input type="checkbox" id="cb1" onclick="updateDisplay()" checked />
                 <label for="cb2">2</label>
-                <input type="checkbox" id="cb2" onchange="update()" checked />
+                <input type="checkbox" id="cb2" onclick="updateDisplay()" checked />
                 <label for="cb3">3</label>
-                <input type="checkbox" id="cb3" onchange="update()" checked />
+                <input type="checkbox" id="cb3" onclick="updateDisplay()" checked />
                 <label for="cb4">4</label>
-                <input type="checkbox" id="cb4" onchange="update()" checked />
+                <input type="checkbox" id="cb4" onclick="updateDisplay()" checked />
                 <label for="cb5">5</label>
-                <input type="checkbox" id="cb5" onchange="update()" checked />
+                <input type="checkbox" id="cb5" onclick="updateDisplay()" checked />
                 <label for="cb6">6</label>
-                <input type="checkbox" id="cb6" onchange="update()" checked />
+                <input type="checkbox" id="cb6" onclick="updateDisplay()" checked />
                 <label for="cb7">7</label>
-                <input type="checkbox" id="cb7" onchange="update()" checked />
+                <input type="checkbox" id="cb7" onclick="updateDisplay()" checked />
+            </fieldset>
+        </li>-->
+
+        <!-- DISPLAY PREFERENCES -->
+        <li>
+            <fieldset>
+                <legend>Display Preferences</legend>
+                <ul>
+                    <li>
+                        <label for="sign">Preference</label>
+                        <select name="sign" id="sign">
+                            <option value="sharps">Sharps</option>
+                            <option value="flats" selected>Flats</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label>Fret Dots Display</label>
+                        <select name="dot-display" id="dot-display">
+                            <option value="fret-num">Fret number</option>
+                            <option value="dot" selected>Dot</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label>Fret Display</label>
+                        <select name="fret-display" id="fret-display">
+                            <option value="interval">Interval (1-7)</option>
+                            <option value="note">Note</option>
+                            <option value="note-interval" selected>Note &amp; Interval</option>
+                            <option value="dot">Dot</option>
+                        </select>
+                    </li>
+                </ul>
             </fieldset>
         </li>
 
@@ -116,7 +141,11 @@
             <div id="guitar-font-slider"></div>
         </li>
         <li>
-            <div id="guitar" name="guitar" cols="200" rows="14" readonly></div>
+            <button id="btnCopy">Copy to clipboard</button>
+        </li>
+        <li>
+            <!--<div id="guitar" class="unselectable" name="guitar" cols="200" rows="14" unselectable="on"></div>-->
+            <div id="guitar" class="unselectable" name="guitar"></div>
         </li>
     </ul>
 </body>

@@ -3,34 +3,61 @@
     font-size: 1.1em;
 }
 
-#form, #form ul{
+#form, #form ul {
     list-style: none;
 }
 
-.emphasized{
+/*to make a fret stand out*/
+.emphasized {
     color: #964e00;
     font-weight: bolder;
 }
-
-#guitar{
-    font-family: monospace;
-    white-space: pre;
+/*to hide a diatonic fret*/
+.hidden {
+    color: #606060;
 }
 
-.inline{
+.interval-hidden{
+    color: #525252;
+}
+
+/*https://stackoverflow.com/questions/69430/is-there-a-way-to-make-text-unselectable-on-an-html-page*/
+*.unselectable {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+    -ms-user-select: none;
+    user-select: none;
+}
+
+
+#guitar {
+    font-family: monospace;
+    white-space: pre;
+    
+}
+
+.inline {
     display: inline;
 }
 
-#key-button{
+#key-button {
     width: 50px;
 }
-#mode-button{
+
+#mode-button {
     width: 150px;
 }
-#sign-button{
+
+#sign-button {
     width: 150px;
 }
-#scale{
+
+#scale {
     display: inline;
     font-size: 1.3em;
     padding-left: 1em;
