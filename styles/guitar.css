@@ -53,12 +53,31 @@
     width: 150px;
 }
 
-#sign-button {
-    width: 150px;
-}
-
 #scale {
     display: inline;
     font-size: 1.3em;
     padding-left: 1em;
+}
+
+#fret-range{
+    width: 50%;
+    margin-top: 10px;
+}
+#guitar-font-slider{
+    width: 50%;
+    margin-top: 10px;
+}
+
+#btnCopy{
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.dpref{
+    display: inline-block;
+    width: 170px;
+}
+
+#amount, #guitar=font-text{
+    margin-top: 5px;
 }

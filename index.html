@@ -102,21 +102,21 @@
                 <legend>Display Preferences</legend>
                 <ul>
                     <li>
-                        <label for="sign">Preference</label>
+                        <label class="dpref" for="sign">Sign Preference</label>
                         <select name="sign" id="sign">
                             <option value="sharps">Sharps</option>
                             <option value="flats" selected>Flats</option>
                         </select>
                     </li>
                     <li>
-                        <label>Fret Dots Display</label>
+                        <label class="dpref">Fret Dots Display</label>
                         <select name="dot-display" id="dot-display">
                             <option value="fret-num">Fret number</option>
                             <option value="dot" selected>Dot</option>
                         </select>
                     </li>
                     <li>
-                        <label>Fret Display</label>
+                        <label class="dpref">Fret Display</label>
                         <select name="fret-display" id="fret-display">
                             <option value="interval">Interval (1-7)</option>
                             <option value="note">Note</option>
@@ -124,22 +124,23 @@
                             <option value="dot">Dot</option>
                         </select>
                     </li>
+                    <li>
+                        <!-- https://jqueryui.com/slider/#range -->
+                        <label class="dpref" id="amount" for="fret-range"></label>
+                        <div class="dpref" id="fret-range"></div>
+                    </li>
+                    <li>
+                        <label class="dpref" for="guitar-font-slider" id="guitar-font-text"></label>
+                        <div class="dpref" id="guitar-font-slider"></div>
+                    </li>
                 </ul>
             </fieldset>
         </li>
 
-        <!-- FRET RANGE -->
-        <li>
-            <!-- https://jqueryui.com/slider/#range -->
-            <label id="amount" for="fret-range"></label>
-            <div id="fret-range"></div>
-        </li>
+       
 
-        <!-- GUITAR TEXT -->
-        <li>
-            <label for="guitar-font-slider" id="guitar-font-text"></label>
-            <div id="guitar-font-slider"></div>
-        </li>
+                    
+        
         <li>
             <button id="btnCopy">Copy to clipboard</button>
         </li>
