@@ -34,11 +34,11 @@
     user-select: none;
 }
 
-
 #guitar {
+    /*font-family: Hack;*/
     font-family: monospace;
+
     white-space: pre;
-    
 }
 
 .inline {
@@ -63,6 +63,14 @@
     width: 50%;
     margin-top: 10px;
 }
+.fret {
+    /*https://stackoverflow.com/questions/2491068/does-height-and-width-not-apply-to-span*/
+    bottom: 0;
+    display: inline-block;
+    width: 2.4em;
+    height: 1em;
+    overflow: hidden;
+}
 #guitar-font-slider{
     width: 50%;
     margin-top: 10px;
@@ -78,6 +86,6 @@
     width: 170px;
 }
 
-#amount, #guitar=font-text{
+#amount, #guitar-font-text{
     margin-top: 5px;
 }

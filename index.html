@@ -6,15 +6,15 @@
 <html>
 <head>
     <title>Tyler's Guitar Helper</title>
-    <meta charset="utf-8" />
+    <meta charset="ISO-8859-1">
     <link href="styles/jquery-ui.min.css" rel="stylesheet" />
     <link href="styles/jquery-ui.structure.min.css" rel="stylesheet" />
     <link href="styles/jquery-ui.theme.min.css" rel="stylesheet" />
     <link href="styles/guitar.css" rel="stylesheet" />
     <script src="scripts/jquery-3.6.0.min.js"></script>
-    <!--<script src="external/jquery/jquery.js"></script>-->
     <script src="scripts/jquery-ui.min.js"></script>
     <script src="scripts/guitar.js"></script>
+
 </head>
 <body>
     <ul id="form">
@@ -24,18 +24,24 @@
             <fieldset>
                 <legend>Scale</legend>
                 <select name="key" id="key">
-                    <option value="0">C</option>
-                    <option value="1">C#</option>
-                    <option value="2">D</option>
-                    <option value="3">D#</option>
-                    <option value="4">E</option>
-                    <option value="5">F</option>
-                    <option value="6">F#</option>
-                    <option value="7">G</option>
-                    <option value="8">G#</option>
-                    <option value="9">A</option>
-                    <option value="10">A#</option>
-                    <option value="11">B</option>
+                    <option value="0" data="0">C</option>
+                    <option value="1" data="1">C#</option>
+                    <option value="2" data="2">D</option>
+                    <option value="3" data="3">D#</option>
+                    <option value="4" data="4">E</option>
+                    <option value="5" data="5">F</option>
+                    <option value="6" data="6">F#</option>
+                    <option value="7" data="7">G</option>
+                    <option value="8" data="8">G#</option>
+                    <option value="9" data="9">A</option>
+                    <option value="10" data="10">A#</option>
+                    <option value="11" data="11">B</option>
+                </select>
+
+                <select name="scaleType" id="scaleType">
+                    <option value="0">Natural Major</option>
+                    <option value="1">Harmonic Minor</option>
+                    <option value="2">Harmonic Major</option>
                 </select>
 
                 <select name="mode" id="mode">
@@ -53,7 +59,7 @@
 
         </li>
 
-       
+
 
         <!-- TUNING -->
         <li>
@@ -76,8 +82,8 @@
 
         <!-- INTERVALS -->
         <!--<li>-->
-            <!--<label for="intervals">Intervals</label>-->
-            <!--<fieldset id="intervals">
+        <!--<label for="intervals">Intervals</label>-->
+        <!--<fieldset id="intervals">
                 <legend>Intervals</legend>
                 <label for="cb1">1</label>
                 <input type="checkbox" id="cb1" onclick="updateDisplay()" checked />
@@ -95,7 +101,6 @@
                 <input type="checkbox" id="cb7" onclick="updateDisplay()" checked />
             </fieldset>
         </li>-->
-
         <!-- DISPLAY PREFERENCES -->
         <li>
             <fieldset>
@@ -137,10 +142,6 @@
             </fieldset>
         </li>
 
-       
-
-                    
-        
         <li>
             <button id="btnCopy">Copy to clipboard</button>
         </li>

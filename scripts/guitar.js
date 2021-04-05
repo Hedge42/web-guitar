@@ -1,14 +1,21 @@
 ﻿
 
-var cMajor = [0, 2, 4, 5, 7, 9, 11];
-var tuning = [4, 11, 7, 2, 9, 4];
+// 
+var cMajorIonian = [0, 2, 4, 5, 7, 9, 11]; // 0
+var cHarmonicMinorIonian = [0, 2, 4, 5, 8, 9, 11]; // 1
+var cHarmonicMajorIonian = [0, 2, 4, 5, 7, 8, 11]; // 2
+
+// set in methods
+var scale = []; // set in methods
+var guitarSpans = []; // set in methods
+var tuning = [4, 11, 7, 2, 9, 4]; // standard tuning
+var minFret = 0;
+var maxFret = 15;
+
 
 window.onload = setupUI;
 
-var _minfret = 0;
-var _maxfret = 15;
 
-var guitar_spans = [];
 
 function setupUI() {
     // https://jqueryui.com
@@ -34,6 +41,7 @@ function setupUI() {
     // $("#intervals input").checkboxradio();
     $("#mode").selectmenu({ change: updateFull });
     $("#key").selectmenu({ change: updateFull });
+    $("#scaleType").selectmenu({ change: updateFull });
 
     // display preferences
     $("#sign").selectmenu({ change: updateDisplay });
@@ -59,6 +67,22 @@ function setupUI() {
     updateFull();
 }
 
+function updateKeyDropdowns() {
+    // changes dropdown sharps to flats and vice versa
+    var $key = $("#key, #strings");
+
+    // https://stackoverflow.com/questions/2828019/looking-for-jquery-find-method-that-includes-the-current-node
+    var $selects = $key.find("select").addBack("select");
+    var isFlats = getUserFlatPreference();
+    var $keyops = $selects.find("option");
+    for (var i = 0; i < $keyops.length; i++) {
+        var o = $keyops.eq(i);
+        o.text(noteValueToName(parseInt(o.attr("data")), isFlats, false));
+    }
+
+    $selects.selectmenu("refresh");
+}
+
 // tuning
 function addTopString() {
     var tuningItem = createTuningItem(0);
@@ -73,21 +97,6 @@ function addBottomString() {
 function createTuningItem(defaultvalue) {
     var li = $("<li>");
 
-    // create checkbox and give unique id
-    var cb = $("<input>");
-    cb.attr("type", "checkbox");
-    cb.prop("checked", true);
-    cb.uniqueId()
-
-    // create and append checkbox w/ label using above unique id
-    //var cbLabel = $("<label>");
-    //cbLabel.attr("for", cb.attr("id"));
-    //cbLabel.text("Show");
-    //li.append(cbLabel);
-    //li.append(cb);
-    //cb.checkboxradio();
-    //cb.on("click", updateDisplay);
-
     // create and append selectbox
     var select = $("<select>");
     li.append(select);
@@ -95,7 +104,6 @@ function createTuningItem(defaultvalue) {
     for (var i = 0; i < 12; i++) {
         var option = $("<option>");
         option.text(noteValueToName(i, true, false));
-        //option.val(i);
         option.attr("data", i);
         select.append(option);
     }
@@ -128,10 +136,10 @@ function prependTuningItem($li) {
 
 // sliders
 function sliderUpdate(event, ui) {
-    _minfret = ui.values[0];
-    _maxfret = ui.values[1];
+    minFret = ui.values[0];
+    maxFret = ui.values[1];
 
-    setFretRangeText(_minfret, _maxfret);
+    setFretRangeText(minFret, maxFret);
 
     updateDisplay();
 }
@@ -147,16 +155,37 @@ function setFretRangeText(min, max) {
 }
 
 // guitar display handling
-function buildGuitar(scale) {
+function updateFull() {
+    var key = getUserKey();
+    var mode = getUserMode();
+    var preferFlats = getUserFlatPreference();
+
+    buildScale(key, mode);
+    getUserTuning();
+    writeScale(key, mode, preferFlats);
+    buildGuitar();
+    updateDisplay();
+}
+function updateDisplay() {
+    // use this when a display preference is changed
+    // such as fret ranges or sharp/flat preference
+    // don't just rewrite the whole thing
+    // ex. because the user may want to keep highlighted frets
+
+    updateKeyDropdowns();
+    setSpanTexts();
+    displayGuitar();
+}
+function buildGuitar() {
     // rebuild the guitar when...
     // the tuning or scale is changed
 
-    var guitar_spans = [];
+    guitarSpans = [];
 
     // for each string in the tuning
     for (var i = 0; i < tuning.length; i++) {
 
-        var string_spans = [];
+        var stringSpans = [];
 
         // for each fret on the fretboard
         for (var j = 0; j < 25; j++) {
@@ -180,13 +209,12 @@ function buildGuitar(scale) {
                 span.addClass("diatonic");
             }
 
-            string_spans.push(span);
+            //stringSpans.push(span);
+            stringSpans.push(span);
         }
 
-        guitar_spans.push(string_spans);
+        guitarSpans.push(stringSpans);
     }
-
-    return guitar_spans;
 }
 function displayGuitar() {
     // write indicator line
@@ -201,13 +229,13 @@ function displayGuitar() {
     // write guitar string lines
 
     // for each guitar string
-    for (var i = 0; i < guitar_spans.length; i++) {
+    for (var i = 0; i < guitarSpans.length; i++) {
 
         // from the min fret to the max fret
-        for (var j = _minfret; j <= _maxfret; j++) {
+        for (var j = minFret; j <= maxFret; j++) {
 
             // write the fret
-            html += guitar_spans[i][j][0].outerHTML + "|";
+            html += guitarSpans[i][j][0].outerHTML + "|";
         }
 
         // write new line
@@ -231,26 +259,15 @@ function updateSpans() {
         var spans = brs.eq(i).nextUntil("br").find("span");
 
         // for each guitar string
-        for (var i = 0; i < guitar_spans.length; i++) {
+        for (var i = 0; i < guitarSpans.length; i++) {
 
             // for each displayed fret
-            for (var j = _minfret; j < _maxfret; j++) {
-                guitar_spans[i][j] = spans[j - _minfret];
+            for (var j = minFret; j < maxFret; j++) {
+                guitarSpans[i][j] = spans[j - minFret];
             }
         }
 
     }
-}
-function updateDisplay() {
-    // use this when a display preference is changed
-    // such as fret ranges or sharp/flat preference
-    // don't just rewrite the whole thing
-    // ex. because the user may want to keep highlighted frets
-
-    setSpanTexts();
-    displayGuitar();
-
-    // alert("Display update");
 }
 function setSpanTexts() {
 
@@ -258,8 +275,8 @@ function setSpanTexts() {
     var isFlats = getUserFlatPreference();
     //var selectedIntervals = getUserIntervals();
 
-    for (var i = 0; i < guitar_spans.length; i++) {
-        var string_spans = guitar_spans[i];
+    for (var i = 0; i < guitarSpans.length; i++) {
+        var string_spans = guitarSpans[i];
 
         // for each fret on the string
         //alert("string " + i + " span length: " + string_spans.length);
@@ -273,7 +290,8 @@ function setSpanTexts() {
             var note_val = parseInt(note_data);
             var interval_data = data_split[1];
             var interval_val = parseInt(interval_data);
-            var interval_str = (interval_val + 1).toString();
+            // var intervalString = (interval_val + 1).toString();
+            var intervalString = noteIntervalString(note_val)
 
             //if (!selectedIntervals[interval_val] && !fret_span.hasClass("interval-hidden")) {
             //    fret_span.addClass("interval-hidden");
@@ -292,11 +310,12 @@ function setSpanTexts() {
 
 
                 var text = "??"
+
                 if (selectedFretDisplayOption === "interval") {
-                    text = " " + interval_str + "  ";
+                    text = " " + intervalString + " ";
                 }
                 else if (selectedFretDisplayOption === "note-interval") {
-                    text = noteValueToName(note_val, isFlats, true) + " " + interval_str;
+                    text = noteValueToName(note_val, isFlats, true) + intervalString;
                 }
                 else if (selectedFretDisplayOption === "note") {
                     text = " " + noteValueToName(note_val, isFlats, true) + " ";
@@ -310,27 +329,11 @@ function setSpanTexts() {
         }
     }
 }
-function updateFull() {
-    var key = getUserKey();
-    var mode = getUserMode();
-    var preferFlats = getUserFlatPreference();
-    var scale = buildScale(key, mode);
-
-    getUserTuning();
-
-    writeScale(key, mode, preferFlats);
-
-    guitar_spans = buildGuitar(scale);
-    setSpanTexts();
-    displayGuitar();
-
-    // alert("Full update");
-}
 function getIndicatorLine() {
     var isDots = $("#dot-display").find("option:selected").val() === "dot";
 
     var s = "";
-    for (var i = _minfret; i <= _maxfret; i++) {
+    for (var i = minFret; i <= maxFret; i++) {
         // TODO lol
         if (i === 0 || i === 3 || i === 5 || i === 7 || i === 9 || i === 12 || i === 15 || i === 17 || i === 19 || i === 21 || i === 24) {
             if (isDots)
@@ -370,6 +373,9 @@ function getUserTuning() {
         tuning.push(note);
     }
 }
+function getSelectOption($select) {
+    return $select.find("option:selected");
+}
 function getUserIntervals() {
     var values = [];
     var cbs = $("#intervals input");
@@ -377,6 +383,9 @@ function getUserIntervals() {
         values.push(cbs[i].checked);
     }
     return values;
+}
+function getUserScaleType() {
+    return getSelectOption($("#scaleType")).val();
 }
 
 // events
@@ -412,7 +421,7 @@ function toggleFret($element) {
     var data_split = $element.attr("data").split(",");
     var string = parseInt(data_split[2]);
     var fret = parseInt(data_split[3]);
-    var $existing = guitar_spans[string][fret];
+    var $existing = guitarSpans[string][fret];
 
     // treat 2 jQuery objects as one
     // https://api.jquery.com/jquery.extend/
@@ -439,7 +448,7 @@ function hideFret($element) {
     var data_split = $element.attr("data").split(",");
     var string = parseInt(data_split[2]);
     var fret = parseInt(data_split[3]);
-    var $existing = guitar_spans[string][fret];
+    var $existing = guitarSpans[string][fret];
 
     // treat 2 jQuery objects as one
     // https://api.jquery.com/jquery.extend/
@@ -489,15 +498,26 @@ function mod(n, m) {
 
 // scale stuff
 function buildScale(key, mode) {
-    var notes = [];
+    scale = [];
+
+    var baseScale = null;
+    var scaleType = getUserScaleType();
+
+    if (scaleType === "1") {
+        baseScale = cHarmonicMinorIonian;
+    }
+    else if (scaleType === "2") {
+        baseScale = cHarmonicMajorIonian;
+    }
+    else {
+        baseScale = cMajorIonian;
+    }
 
     for (var i = 0; i < 7; i++) {
         var interval = (mode + i) % 7;
-        var note = mod(cMajor[interval] - cMajor[mode] + key, 12);
-        notes.push(note);
+        var note = mod(baseScale[interval] - baseScale[mode] + key, 12);
+        scale.push(note);
     }
-
-    return notes;
 }
 function writeScale(key, mode, preferFlats) {
 
@@ -505,7 +525,7 @@ function writeScale(key, mode, preferFlats) {
     // text += noteValueToName(key, preferFlats, false) + " ";
     // text += modeValueToName(mode) + ": ";
 
-    var scale = buildScale(key, mode);
+    buildScale(key, mode);
     for (var i = 0; i < scale.length; i++) {
         text += noteValueToName(scale[i], preferFlats, false) + " ";
     }
@@ -520,6 +540,82 @@ function noteInterval(value, scale) {
         }
     }
     return -1;
+}
+function noteIntervalString(note) {
+    // finds interval inside scale
+    for (var i = 0; i < scale.length; i++) {
+        if (note === scale[i]) {
+            return " " + (i + 1).toString();
+        }
+    }
+
+    var isFlats = getUserFlatPreference();
+    for (var i = 0; i < scale.length; i++) {
+        // find where value fits between is
+
+        var nextIndex = i + 1;
+        if (nextIndex >= scale.length) {
+            nextIndex -= scale.length;
+        }
+
+        currentNote = scale[i];
+        nextNote = scale[nextIndex];
+
+        // where the scale's next note is higher, and the current is lower
+        // or the scale's next note is smaller, and the current is larger
+
+        var standard = currentNote < note && nextNote > note;
+        var btoc = currentNote > note && nextNote > note;
+
+        if (standard || btoc) {
+
+            if (isFlats) {
+
+                // double flat?
+                if (note < nextNote - 1) {
+                    return dblFlatChar() + (nextIndex + 1).toString();
+                }
+                else {
+                    return flatChar() + (nextIndex + 1).toString();
+                }
+            }
+            else {
+
+                // double sharp?
+                if (note > currentNote + 1) {
+                    return dblSharpChar() + (i + 1).toString();
+                }
+                else {
+                    return sharpChar() + (i + 1).toString();
+                }
+            }
+        }
+    }
+
+    return "?";
+}
+function sharpChar() {
+    // https://www.w3schools.com/jsref/jsref_fromcharcode.asp
+    // https://www.alt-codes.net/music_note_alt_codes.php
+    return "#";
+    //return String.fromCharCode(9839);
+}
+function flatChar() {
+    // https://www.w3schools.com/jsref/jsref_fromcharcode.asp
+    // // https://www.alt-codes.net/music_note_alt_codes.php
+    return "b";
+    //return String.fromCharCode(9837);
+}
+function dblSharpChar() {
+    // https://www.w3schools.com/jsref/jsref_fromcharcode.asp
+    // https://www.fileformat.info/info/unicode/char/1d12a/index.htm
+    //return "\u{1D12A}"
+    return "#";
+}
+function dblFlatChar() {
+    // https://graphemica.com/%F0%9D%84%AB
+    return "b";
+    //return "\u{1D12B}";
 }
 function noteValueToName(value, preferFlats, pad) {
     if (value === 0)
