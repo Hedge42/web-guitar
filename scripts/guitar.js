@@ -10,10 +10,13 @@ var scale = []; // set in methods
 var guitarSpans = []; // set in methods
 var tuning = [4, 11, 7, 2, 9, 4]; // standard tuning
 var minFret = 0;
-var maxFret = 15;
+var maxFret = 24;
 
 
 window.onload = setupUI;
+
+var savedSpans = [];
+var isEditing = false;
 
 
 
@@ -23,10 +26,10 @@ function setupUI() {
         range: true,
         min: 0,
         max: 24,
-        values: [0, 15],
+        values: [0, 24],
         slide: sliderUpdate,
     });
-    setFretRangeText(0, 15);
+    setFretRangeText(0, 24);
 
     var default_font_size = 20;
     $("#guitar-font-slider").slider({
@@ -62,11 +65,18 @@ function setupUI() {
     $("#btnCopy").button();
     $("#btnCopy").on("click", copyGuitar);
 
+    $("#cbOctaves").checkboxradio();
+
+    $("#cancelEdit").button();
+
+    $("#saveEdit").button();
+    $("#editScale").button();
+    $("#saveEdit, #cancelEdit").addClass("disabled");
+
 
     buildTuningArea();
     updateFull();
 }
-
 function updateKeyDropdowns() {
     // changes dropdown sharps to flats and vice versa
     var $key = $("#key, #strings");
@@ -160,10 +170,10 @@ function updateFull() {
     var mode = getUserMode();
     var preferFlats = getUserFlatPreference();
 
-    buildScale(key, mode);
-    getUserTuning();
+    scale = buildScale(key, mode);
+    tuning = getUserTuning();
     writeScale(key, mode, preferFlats);
-    buildGuitar();
+    guitarSpans = buildGuitar();
     updateDisplay();
 }
 function updateDisplay() {
@@ -180,7 +190,7 @@ function buildGuitar() {
     // rebuild the guitar when...
     // the tuning or scale is changed
 
-    guitarSpans = [];
+    var gSpans = [];
 
     // for each string in the tuning
     for (var i = 0; i < tuning.length; i++) {
@@ -213,8 +223,10 @@ function buildGuitar() {
             stringSpans.push(span);
         }
 
-        guitarSpans.push(stringSpans);
+        gSpans.push(stringSpans);
     }
+
+    return gSpans;
 }
 function displayGuitar() {
     // write indicator line
@@ -315,16 +327,16 @@ function setSpanTexts() {
                     text = " " + intervalString + " ";
                 }
                 else if (selectedFretDisplayOption === "note-interval") {
-                    text = noteValueToName(note_val, isFlats, true) + intervalString;
+                    text = noteValueToName(note_val, isFlats, true, true) + intervalString;
                 }
                 else if (selectedFretDisplayOption === "note") {
-                    text = " " + noteValueToName(note_val, isFlats, true) + " ";
+                    text = " " + noteValueToName(note_val, isFlats, true, true) + " ";
                 }
                 else if (selectedFretDisplayOption === "dot") {
                     text = " <> ";
                 }
 
-                fret_span.text(text);
+                fret_span.html(text);
             }
         }
     }
@@ -351,42 +363,6 @@ function getIndicatorLine() {
     return s + "<br>";
 }
 
-// getting user selections
-function getUserKey() {
-    var key = document.getElementById("key").value;
-    return parseInt(key);
-}
-function getUserMode() {
-    var mode = document.getElementById("mode").value;
-    return parseInt(mode);
-}
-function getUserFlatPreference() {
-    return document.getElementById("sign").value === "flats";
-}
-function getUserTuning() {
-    tuning = [];
-    var strings = $("#strings");
-    for (var i = 0; i < strings.children().length; i++) {
-        var li = strings.children().eq(i);
-        var selectedOption = li.find("option:selected");
-        var note = parseInt(selectedOption.attr("data"));
-        tuning.push(note);
-    }
-}
-function getSelectOption($select) {
-    return $select.find("option:selected");
-}
-function getUserIntervals() {
-    var values = [];
-    var cbs = $("#intervals input");
-    for (var i = 0; i < cbs.length; i++) {
-        values.push(cbs[i].checked);
-    }
-    return values;
-}
-function getUserScaleType() {
-    return getSelectOption($("#scaleType")).val();
-}
 
 // events
 function clickHandler(event) {
@@ -394,8 +370,19 @@ function clickHandler(event) {
     var target = event.target || event.srcElement;
     var $target = $(target);
 
+    if ($target.parent().hasClass("fret")) {
+        $target = $target.parent();
+    }
+
     if ($target.hasClass("fret")) {
-        toggleFret($target);
+
+        if (getUserOctavesChecked()) {
+            toggleAll($target);
+        }
+        else {
+            toggleFret($target);
+        }
+
         updateSpans();
     }
 
@@ -406,14 +393,86 @@ function contextHandler(event) {
     var target = event.target || event.srcElement;
     var $target = $(target);
 
+    if ($target.parent().hasClass("fret")) {
+        $target = $target.parent();
+    }
+
     if ($target.hasClass("fret")) {
 
-        hideFret($target);
+        if (getUserOctavesChecked()) {
+            hideAll($target);
+        }
+        else {
+            hideFret($target);
+        }
+
         updateSpans();
     }
 
     // alert($target[0].outerHTML);
     return false;
+}
+function toggleAll($element) {
+
+    var note = parseInt($element.attr("data").split(",")[0]);
+
+    // shown and not emphasized
+    var shouldEmphasize = !$element.hasClass("emphasized") && !$element.hasClass("hidden");
+    // otherwise just make visible
+
+    for (var string = 0; string < tuning.length; string++) {
+
+        for (var fret = 0; fret <= 24; fret++) {
+            var span = guitarSpans[string][fret];
+            var fretNote = parseInt(span.attr("data").split(",")[0])
+            if (fretNote % 12 === note) {
+
+                // making sure not to add duplicate class
+                span.removeClass("hidden");
+                span.removeClass("emphasized");
+
+                if (shouldEmphasize) {
+                    span.addClass("emphasized");
+                }
+            }
+        }
+    }
+
+    $element.removeClass("hidden");
+    $element.removeClass("emphasized");
+    if (shouldEmphasize)
+        $element.addClass("emphasized");
+
+    updateDisplay();
+}
+function hideAll($element) {
+
+    var shouldHide = !$element.hasClass("hidden");
+
+    if (shouldHide) {
+
+        var data_split = $element.attr("data").split(",");
+        var note = parseInt(data_split[0]);
+
+        for (var string = 0; string < tuning.length; string++) {
+
+            for (var fret = 0; fret <= 24; fret++) {
+                var span = guitarSpans[string][fret];
+                var fretNote = parseInt(span.attr("data").split(",")[0])
+                if (fretNote % 12 === note) {
+                    // making sure not to add duplicate class
+                    span.removeClass("hidden");
+                    span.removeClass("emphasized");
+                    span.addClass("hidden");
+                }
+            }
+        }
+
+        $element.removeClass("emphasized");
+        $element.addClass("hidden");
+    }
+
+    updateDisplay();
 }
 function toggleFret($element) {
     // find the span in the global where the data matches this one
@@ -496,171 +555,36 @@ function mod(n, m) {
     return ((n % m) + m) % m;
 }
 
-// scale stuff
-function buildScale(key, mode) {
-    scale = [];
+// editor functions
+function editScale() {
+    // scale editor button
 
-    var baseScale = null;
-    var scaleType = getUserScaleType();
+    // add cancel and save buttons
+    // add scale name text field
 
-    if (scaleType === "1") {
-        baseScale = cHarmonicMinorIonian;
-    }
-    else if (scaleType === "2") {
-        baseScale = cHarmonicMajorIonian;
-    }
-    else {
-        baseScale = cMajorIonian;
-    }
+    savedSpans = guitarSpans;
 
-    for (var i = 0; i < 7; i++) {
-        var interval = (mode + i) % 7;
-        var note = mod(baseScale[interval] - baseScale[mode] + key, 12);
-        scale.push(note);
-    }
+    guitarSpans = buildGuitar();
+
+    $("#cancelEdit, #saveEdit, #customScaleName, #customLabel").removeClass("disabled");
+    $("#key, #scaleType, #mode, #fret-display").selectmenu("disable");
+
+    $("#editScale").button("disable");
+    $("#fret-display").val("note");
+    $("#fret-display").selectmenu("refresh");
+
+    // disable scale section
 }
-function writeScale(key, mode, preferFlats) {
+function cancelScaleEdit() {
+    $("#cancelEdit, #saveEdit, #customScaleName, #customLabel").addClass("disabled");
+    $("#editScale").button("enable");
+    $("#key, #scaleType, #mode, #fret-display").selectmenu("enable");
 
-    var text = "";
-    // text += noteValueToName(key, preferFlats, false) + " ";
-    // text += modeValueToName(mode) + ": ";
-
-    buildScale(key, mode);
-    for (var i = 0; i < scale.length; i++) {
-        text += noteValueToName(scale[i], preferFlats, false) + " ";
-    }
-
-    var scaleText = document.getElementById("scale");
-    scaleText.innerText = text;
+    guitarSpans = savedSpans;
 }
-function noteInterval(value, scale) {
-    for (var i = 0; i < scale.length; i++) {
-        if (value === scale[i]) {
-            return i;
-        }
-    }
-    return -1;
+function saveScale() {
+    // validate scale
+    $("#cancelEdit, #saveEdit, #customScaleName, #customLabel").addClass("disabled");
+    $("#editScale").button("enable");
+    $("#key, #scaleType, #mode, #fret-display").selectmenu("enable");
 }
-function noteIntervalString(note) {
-    // finds interval inside scale
-    for (var i = 0; i < scale.length; i++) {
-        if (note === scale[i]) {
-            return " " + (i + 1).toString();
-        }
-    }
-
-    var isFlats = getUserFlatPreference();
-    for (var i = 0; i < scale.length; i++) {
-        // find where value fits between is
-
-        var nextIndex = i + 1;
-        if (nextIndex >= scale.length) {
-            nextIndex -= scale.length;
-        }
-
-        currentNote = scale[i];
-        nextNote = scale[nextIndex];
-
-        // where the scale's next note is higher, and the current is lower
-        // or the scale's next note is smaller, and the current is larger
-
-        var standard = currentNote < note && nextNote > note;
-        var btoc = currentNote > note && nextNote > note;
-
-        if (standard || btoc) {
-
-            if (isFlats) {
-
-                // double flat?
-                if (note < nextNote - 1) {
-                    return dblFlatChar() + (nextIndex + 1).toString();
-                }
-                else {
-                    return flatChar() + (nextIndex + 1).toString();
-                }
-            }
-            else {
-
-                // double sharp?
-                if (note > currentNote + 1) {
-                    return dblSharpChar() + (i + 1).toString();
-                }
-                else {
-                    return sharpChar() + (i + 1).toString();
-                }
-            }
-        }
-    }
-
-    return "?";
-}
-function sharpChar() {
-    // https://www.w3schools.com/jsref/jsref_fromcharcode.asp
-    // https://www.alt-codes.net/music_note_alt_codes.php
-    return "#";
-    //return String.fromCharCode(9839);
-}
-function flatChar() {
-    // https://www.w3schools.com/jsref/jsref_fromcharcode.asp
-    // // https://www.alt-codes.net/music_note_alt_codes.php
-    return "b";
-    //return String.fromCharCode(9837);
-}
-function dblSharpChar() {
-    // https://www.w3schools.com/jsref/jsref_fromcharcode.asp
-    // https://www.fileformat.info/info/unicode/char/1d12a/index.htm
-    //return "\u{1D12A}"
-    return "#";
-}
-function dblFlatChar() {
-    // https://graphemica.com/%F0%9D%84%AB
-    return "b";
-    //return "\u{1D12B}";
-}
-function noteValueToName(value, preferFlats, pad) {
-    if (value === 0)
-        return (pad ? "C " : "C");
-    else if (value === 1)
-        return preferFlats ? "Db" : "C#";
-    else if (value === 2)
-        return pad ? "D " : "D";
-    else if (value === 3)
-        return preferFlats ? "Eb" : "D#";
-    else if (value === 4)
-        return pad ? "E " : "E";
-    else if (value === 5)
-        return pad ? "F " : "F";
-    else if (value === 6)
-        return preferFlats ? "Gb" : "F#";
-    else if (value === 7)
-        return pad ? "G " : "G";
-    else if (value === 8)
-        return preferFlats ? "Ab" : "G#";
-    else if (value === 9)
-        return pad ? "A " : "A";
-    else if (value === 10)
-        return preferFlats ? "Bb" : "A#";
-    else if (value === 11)
-        return pad ? "B " : "B";
-    else
-        return "?";
-}
-function modeValueToName(mode) {
-    if (mode === 0)
-        return "Ionian";
-    else if (mode === 1)
-        return "Dorian";
-    else if (mode === 2)
-        return "Phrygian";
-    else if (mode === 3)
-        return "Lydian";
-    else if (mode === 4)
-        return "MixoLydian";
-    else if (mode === 5)
-        return "Aeolian";
-    else if (mode === 6)
-        return "Locrian";
-    else
-        return "?";
-}
-

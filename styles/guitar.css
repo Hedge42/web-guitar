@@ -1,6 +1,8 @@
 ﻿body {
     font-family: Verdana,Arial,sans-serif;
     font-size: 1.1em;
+
+    font-family: 
 }
 
 #form, #form ul {
@@ -17,8 +19,12 @@
     color: #606060;
 }
 
-.interval-hidden{
+.interval-hidden {
     color: #525252;
+}
+
+.disabled{
+    display: none;
 }
 
 /*https://stackoverflow.com/questions/69430/is-there-a-way-to-make-text-unselectable-on-an-html-page*/
@@ -33,11 +39,9 @@
     -ms-user-select: none;
     user-select: none;
 }
-
 #guitar {
     /*font-family: Hack;*/
     font-family: monospace;
-
     white-space: pre;
 }
 
@@ -59,33 +63,45 @@
     padding-left: 1em;
 }
 
-#fret-range{
+#fret-range {
     width: 50%;
     margin-top: 10px;
 }
+
 .fret {
     /*https://stackoverflow.com/questions/2491068/does-height-and-width-not-apply-to-span*/
     bottom: 0;
     display: inline-block;
     width: 2.4em;
     height: 1em;
-    overflow: hidden;
+    vertical-align: top;
+    /*border: 1px solid green;*/
 }
-#guitar-font-slider{
+
+.char {
+    display: inline-block;
+    width: .6em;
+    text-align: center;
+    position: relative;
+    margin-top: -.22em;
+    /*border: 1px solid red;*/
+}
+
+#guitar-font-slider {
     width: 50%;
     margin-top: 10px;
 }
 
-#btnCopy{
+#btnCopy {
     margin-top: 10px;
     margin-bottom: 10px;
 }
 
-.dpref{
+.dpref {
     display: inline-block;
     width: 170px;
 }
 
-#amount, #guitar-font-text{
+#amount, #guitar-font-text {
     margin-top: 5px;
 }
