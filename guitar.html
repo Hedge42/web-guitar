@@ -1,0 +1,626 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Guitar Scale Visualizer</title>
+    <link rel="icon" type="image/x-icon"
+        href="https://raw.githubusercontent.com/Hedge42/web-guitar/9d69c3b0ad74dc14eecc5f3b954f1cb13b01ae53/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+
+        .fret.ctrl-hover {
+            background-color: rgba(255, 255, 0, 0.3);
+        }
+
+
+        .sep {
+            color: #888888;
+        }
+
+        body {
+            margin: 0;
+            background: #121212;
+            color: #e0e0e0;
+            font-family: sans-serif;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            border: none;
+            font-size: 24px;
+            padding: 5px 10px;
+            cursor: pointer;
+            z-index: 200;
+        }
+
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 300px;
+            background: #1e1e1e;
+            padding: 60px 20px 20px;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 150;
+        }
+
+        #sidebar.open {
+            transform: translateX(0);
+        }
+
+        #main {
+            margin-left: 0;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        #sidebar.open+#main {
+            margin-left: 300px;
+        }
+
+        .setting {
+            display: flex;
+            align-items: center;
+        }
+
+        .setting:not(.tuning) {
+            margin-bottom: 0.5em;
+        }
+
+        #strings .setting {
+            margin-bottom: 0.25em;
+        }
+
+        .setting label[for] {
+            margin: 0;
+            padding-right: 0.5em;
+            flex: 0 0 120px;
+        }
+
+        .setting>select,
+        .setting>input[type="range"] {
+            flex: 1;
+            min-width: 0;
+            background: #2e2e2e;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 0.25em;
+        }
+
+        #addTopString,
+        #addBottomString {
+            flex: 0 0 auto;
+            width: 1.5em;
+            height: 1.5em;
+            padding: 0;
+            font-size: 1.2em;
+            line-height: 1.5em;
+            text-align: center;
+            background: #2e2e2e;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+
+        #strings .setting>button {
+            flex: 0 0 auto;
+            width: 1.5em;
+            height: 1.5em;
+            padding: 0;
+            margin-left: 0.5em;
+            font-size: 1em;
+            line-height: 1.5em;
+            text-align: center;
+            background: #2e2e2e;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+
+        select,
+        button,
+        input[type="range"] {
+            background: #2e2e2e;
+            color: #e0e0e0;
+        }
+
+        button {
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+
+        .readout {
+            margin: 0 0 0.5em 0;
+            font-size: 0.9em;
+            color: #bbbbbb;
+        }
+
+        #guitar {
+            white-space: pre;
+            font-family: "Roboto Mono", monospace;
+            font-size: 20px;
+            background: #121212;
+            color: #e0e0e0;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        /* make each fret span exactly 4 characters wide */
+        .fret {
+            display: inline-block;
+            width: 4ch;
+            text-align: left;
+            /* preserve padding on the right */
+        }
+
+        /* hover tint */
+        .fret:hover {
+            background-color: rgba(255, 255, 0, 0.3);
+            cursor: pointer;
+        }
+
+        /* focused (red) state */
+        .fret.focused {
+            background-color: rgba(255, 0, 0, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <button id="toggleSidebar" class="sidebar-toggle">☰</button>
+    <aside id="sidebar" class="open">
+        <h2>Scale</h2>
+        <div class="setting">
+            <label for="key">Key</label>
+            <select id="key">
+                <option value="0">C</option>
+                <option value="1">C#</option>
+                <option value="2">D</option>
+                <option value="3">D#</option>
+                <option value="4">E</option>
+                <option value="5">F</option>
+                <option value="6">F#</option>
+                <option value="7">G</option>
+                <option value="8">G#</option>
+                <option value="9">A</option>
+                <option value="10">A#</option>
+                <option value="11">B</option>
+            </select>
+        </div>
+        <div class="setting">
+            <label for="scaleType">Scale Type</label>
+            <select id="scaleType">
+                <option value="0">Natural Major</option>
+                <option value="1">Harmonic Minor</option>
+                <option value="2">Harmonic Major</option>
+            </select>
+        </div>
+        <div class="setting">
+            <label for="mode">Mode</label>
+            <select id="mode">
+                <option value="0">Ionian</option>
+                <option value="1">Dorian</option>
+                <option value="2">Phrygian</option>
+                <option value="3">Lydian</option>
+                <option value="4">Mixolydian</option>
+                <option value="5">Aeolian</option>
+                <option value="6">Locrian</option>
+            </select>
+        </div>
+        <div class="readout" id="scale"></div>
+
+        <h2>Tuning</h2>
+        <div class="setting tuning">
+            <button id="addTopString">+</button>
+        </div>
+        <div id="strings"></div>
+        <div class="setting tuning">
+            <button id="addBottomString">+</button>
+        </div>
+
+        <h2>Display Preferences</h2>
+        <div class="setting">
+            <label for="sign">Sign</label>
+            <select id="sign">
+                <option value="sharps">Sharps</option>
+                <option value="flats" selected>Flats</option>
+            </select>
+        </div>
+        <div class="setting">
+            <label for="dotDisplay">Guides</label>
+            <select id="dotDisplay">
+                <option value="fret-num">Fret Number</option>
+                <option value="dot" selected>Dot</option>
+            </select>
+        </div>
+        <div class="setting">
+            <label for="fretDisplay">Frets</label>
+            <select id="fretDisplay">
+                <option value="interval">Interval</option>
+                <option value="note">Note</option>
+                <option value="note-interval" selected>Note & Interval</option>
+                <option value="dot">Dot</option>
+            </select>
+        </div>
+        <div class="setting">
+            <label for="fretMin">Min Fret</label>
+            <input type="range" id="fretMin" min="0" max="24" value="0">
+        </div>
+        <div class="setting">
+            <label for="fretMax">Max Fret</label>
+            <input type="range" id="fretMax" min="0" max="24" value="15">
+        </div>
+        <div class="readout" id="fretRangeLabel">Fret range: 0 – 15</div>
+        <div class="setting">
+            <label for="fontSize">Font Size</label>
+            <input type="range" id="fontSize" min="8" max="24" value="20">
+        </div>
+        <div class="readout" id="fontSizeLabel">Font size: 20</div>
+        <div class="setting" style="margin-top:1em; justify-content:flex-start;">
+            <button id="hideAll">Hide All</button>
+            <button id="showAll" style="margin-left:0.5em;">Show All</button>
+        </div>
+    </aside>
+
+    </aside>
+
+    <div id="main">
+        <pre id="guitar"></pre>
+    </div>
+
+    <script>
+        (() => {
+            const major = [0, 2, 4, 5, 7, 9, 11];
+            const harmMin = [0, 2, 4, 5, 8, 9, 11];
+            const harmMaj = [0, 2, 4, 5, 7, 8, 11];
+            let scale = [],
+                tuning = [4, 11, 7, 2, 9, 4],
+                minF = 0,
+                maxF = 15,
+                guitarSpans = [],
+                hoveredFret = null
+                ;
+
+            const $ = id => document.getElementById(id);
+
+            function init() {
+                // structural changes → rebuild spans & text
+                ['key', 'scaleType', 'mode']
+                    .forEach(id => $(id).addEventListener('change', updateFull));
+
+                // display-only changes → only re-text & render existing spans
+                ['sign', 'dotDisplay', 'fretDisplay']
+                    .forEach(id => $(id).addEventListener('change', updateDisplay));
+
+
+                $('fretMin').addEventListener('input', e => {
+                    minF = +e.target.value;
+                    updateLabels();
+                    updateDisplay();
+                });
+                $('fretMax').addEventListener('input', e => {
+                    maxF = +e.target.value;
+                    updateLabels();
+                    updateDisplay();
+                });
+                $('fontSize').addEventListener('input', e => {
+                    $('guitar').style.fontSize = e.target.value + 'px';
+                    $('fontSizeLabel').textContent = 'Font size: ' + e.target.value;
+                });
+
+                $('addTopString').addEventListener('click', () => addString(true));
+                $('addBottomString').addEventListener('click', () => addString(false));
+                $('toggleSidebar').addEventListener('click', () => $('sidebar').classList.toggle('open'));
+
+                // hide every fret (add .hidden, remove .focused) then repaint
+                $('hideAll').addEventListener('click', () => {
+                    guitarSpans.flat().forEach(span => {
+                        span.classList.add('hidden');
+                        span.classList.remove('focused');
+                    });
+                    updateDisplay();
+                });
+
+                // show every fret (remove both .hidden and .focused) then repaint
+                $('showAll').addEventListener('click', () => {
+                    guitarSpans.flat().forEach(span => {
+                        span.classList.remove('hidden', 'focused');
+                    });
+                    updateDisplay();
+                });
+
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Control' && hoveredFret) {
+                        const note = hoveredFret.dataset.note;
+                        document.querySelectorAll(`.fret[data-note="${note}"]`)
+                            .forEach(s => s.classList.add('ctrl-hover'));
+                    }
+                });
+
+                document.addEventListener('keyup', e => {
+                    if (e.key === 'Control') {
+                        document.querySelectorAll('.ctrl-hover')
+                            .forEach(s => s.classList.remove('ctrl-hover'));
+                    }
+                });
+
+                buildStrings();
+                updateFull();
+            }
+
+            function updateLabels() {
+                $('fretRangeLabel').textContent = `Fret range: ${minF} – ${maxF}`;
+            }
+
+            function buildStrings() {
+                const container = $('strings');
+                container.innerHTML = '';
+                tuning.forEach((t, i) => appendTuning(t, i));
+            }
+
+            function appendTuning(val, i) {
+                const div = document.createElement('div');
+                div.className = 'setting';
+                const sel = document.createElement('select');
+                for (let n = 0; n < 12; n++) {
+                    sel.add(new Option(noteName(n, true, false), n));
+                }
+                sel.value = val;
+                sel.addEventListener('change', e => {
+                    tuning[i] = +e.target.value;
+                    updateFull();
+                });
+                const btn = document.createElement('button');
+                btn.textContent = '−';
+                btn.addEventListener('click', () => { tuning.splice(i, 1); buildStrings(); updateFull(); });
+                div.append(sel, btn);
+                $('strings').append(div);
+            }
+
+            function addString(top) {
+                top ? tuning.unshift(0) : tuning.push(0);
+                buildStrings();
+                updateFull();
+            }
+
+            function updateFull() {
+                const key = +$('key').value, mode = +$('mode').value, flats = $('sign').value === 'flats';
+                const base = $('scaleType').value === '1' ? harmMin
+                    : $('scaleType').value === '2' ? harmMaj
+                        : major;
+                scale = Array.from({ length: 7 }, (_, i) => ((base[(mode + i) % 7] - base[mode] + key + 12) % 12));
+                $('scale').textContent = scale.map(n => noteName(n, flats, false)).join(' ');
+                // inside updateFull(), where you build guitarSpans:
+                guitarSpans = tuning.map((root, sI) =>
+                    Array.from({ length: 25 }, (_, f) => {
+                        const note = (root + f) % 12,
+                            idx = scale.indexOf(note);
+                        const span = document.createElement('span');
+                        span.className = 'fret ' + (idx < 0 ? 'hidden non-diatonic' : 'diatonic');
+                        span.dataset.note = note;
+                        span.dataset.interval = idx;
+                        span.dataset.string = sI;
+                        span.dataset.fret = f;
+
+                        span.addEventListener('mouseenter', e => {
+                            // remember this span as the one under the cursor
+                            hoveredFret = span;
+
+                            // if Ctrl is already down, highlight all matching frets
+                            if (e.ctrlKey) {
+                                document.querySelectorAll(`.fret[data-note="${note}"]`)
+                                    .forEach(s => s.classList.add('ctrl-hover'));
+                            }
+                        });
+                        span.addEventListener('mouseleave', () => {
+                            // no longer hovering this span
+                            hoveredFret = null;
+
+                            // always clear highlight when leaving any fret
+                            document.querySelectorAll(`.fret[data-note="${note}"]`)
+                                .forEach(s => s.classList.remove('ctrl-hover'));
+                        });
+
+
+                        // ————————————————————————————————
+                        // CTRL+CLICK: cycle hidden → visible → focused on all same-note
+                        span.addEventListener('click', e => {
+                            const targets = e.ctrlKey
+                                ? Array.from(document.querySelectorAll(`.fret[data-note="${note}"]`))
+                                : [span];
+
+                            targets.forEach(s => {
+                                if (s.classList.contains('focused')) {
+                                    s.classList.remove('focused');
+                                    s.classList.add('hidden');
+                                } else if (s.classList.contains('hidden')) {
+                                    s.classList.remove('hidden');
+                                } else {
+                                    s.classList.add('focused');
+                                }
+                            });
+
+                            setSpanTexts();
+                            renderGuitar();
+                        });
+
+
+                        return span;
+                    })
+                );
+
+                updateDisplay();
+            }
+
+            function updateDisplay() {
+                setSpanTexts();
+                renderGuitar();
+            }
+
+            function setSpanTexts() {
+                const disp = $('fretDisplay').value;
+                const flats = $('sign').value === 'flats';
+                const sym = flats ? 'b' : '#';
+
+                guitarSpans.flat().forEach(span => {
+                    const n = +span.dataset.note;
+                    const iv = +span.dataset.interval;
+
+                    // Hidden frets stay blank
+                    if (span.classList.contains('hidden')) {
+                        span.textContent = '    ';
+                        return;
+                    }
+
+                    let txt;
+                    if (span.classList.contains('non-diatonic')) {
+                        // Build an array of your 7 diatonic notes with their scale‐degree index
+                        const pairs = scale.map((v, i) => ({ val: v, idx: i }));
+
+                        // Find the nearest lower neighbor (smallest positive (n - p.val) mod 12)
+                        let lower = null;
+                        for (const p of pairs) {
+                            const d = (n - p.val + 12) % 12;
+                            if (p.val === n || d === 0) continue;
+                            if (!lower || d < ((n - lower.val + 12) % 12)) lower = p;
+                        }
+
+                        // Find the nearest upper neighbor (smallest positive (p.val - n) mod 12)
+                        let upper = null;
+                        for (const p of pairs) {
+                            const d = (p.val - n + 12) % 12;
+                            if (p.val === n || d === 0) continue;
+                            if (!upper || d < ((upper.val - n + 12) % 12)) upper = p;
+                        }
+
+                        // Choose based on sign preference
+                        const use = flats ? upper : lower;
+                        const diff = flats
+                            ? (upper.val - n + 12) % 12
+                            : (n - lower.val + 12) % 12;
+
+                        // diff should now be 1 for adjacent semitone; so diff+1 = 2 gives you exactly "bb" or "##"
+                        const acc = sym.repeat(diff + 1);
+                        const base = noteName(use.val, flats, false);
+                        const num = use.idx + 1;
+
+                        if (disp === 'interval') txt = `${acc}${num}`;            // e.g. "bb7" or "##1"
+                        else if (disp === 'note-interval') txt = `${base}${acc}${num}`;    // "Bbb7" or "C##1"
+                        else if (disp === 'note') txt = noteName(n, flats, true);
+                        else txt = '(  )';
+                    }
+                    else {
+                        // Normal diatonic formatting
+                        if (disp === 'interval') txt = ` ${(iv + 1)} `;
+                        else if (disp === 'note-interval') txt = `${noteName(n, flats, true)} ${iv + 1}`;
+                        else if (disp === 'note') txt = ` ${noteName(n, flats, true)} `;
+                        else txt = '(  )';
+                    }
+
+                    span.textContent = txt;
+                });
+            }
+
+
+
+            function renderGuitar() {
+                const guitarEl = $('guitar');
+                guitarEl.innerHTML = '';
+
+                // helper to build the indicator row as actual <span> elements
+                function makeIndicatorSpans() {
+                    const dots = $('dotDisplay').value === 'fret-num';
+                    const markers = [0, 3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
+                    const spans = [];
+                    for (let val = minF; val <= maxF; val++) {
+                        let txt = '     ';
+                        if (markers.includes(val)) {
+                            if (dots) txt = '[<>] ';
+                            else if (val < 10) txt = `[ ${val}] `;
+                            else txt = `[${val}] `;
+                        }
+                        const s = document.createElement('span');
+                        s.className = 'sep';
+                        s.textContent = txt;
+                        spans.push(s);
+                    }
+                    return spans;
+                }
+
+                // top indicator
+                makeIndicatorSpans().forEach(s => guitarEl.appendChild(s));
+                guitarEl.appendChild(document.createTextNode('\n'));
+
+                // one row per string
+                guitarSpans.forEach(stringSpans => {
+                    for (let f = minF; f <= maxF; f++) {
+                        const span = stringSpans[f];
+                        // ensure its text is up-to-date
+                        span.textContent = span.classList.contains('hidden')
+                            ? '    '
+                            : span.textContent;
+                        guitarEl.appendChild(span);
+
+                        const sep = document.createElement('span');
+                        sep.className = 'sep';
+                        sep.textContent = '|';
+                        guitarEl.appendChild(sep);
+                    }
+                    guitarEl.appendChild(document.createTextNode('\n'));
+                });
+
+                // bottom indicator
+                makeIndicatorSpans().forEach(s => guitarEl.appendChild(s));
+            }
+
+
+            function makeIndicator() {
+                const dots = $('dotDisplay').value === 'fret-num';
+                const markers = [0, 3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
+                return Array.from({ length: maxF - minF + 1 }, (_, i) => {
+                    const val = minF + i;
+                    if (markers.includes(val)) {
+                        if (dots) return '[<>] ';
+                        return val < 10 ? `[ ${val}] ` : `[${val}] `;
+                    }
+                    return '     ';
+                }).join('');
+            }
+
+            function noteName(v, flats, pad) {
+                const sharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
+                    flat = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+                const name = flats ? flat[v] : sharp[v];
+                return pad ? name.padEnd(2, ' ') : name;
+            }
+
+            function updateDisplay() {
+                setSpanTexts();   // recompute each span.textContent based on its classes
+                renderGuitar();   // draw the spans as before
+            }
+
+
+            window.addEventListener('DOMContentLoaded', init);
+        })();
+    </script>
+</body>
+
+</html>
